@@ -388,3 +388,92 @@ if _WIN32PRINT:
             if self.hPrinter is None:
                 raise Exception("Printer job not opened")
             win32print.WritePrinter(self.hPrinter, msg)
+
+
+_CUPSPRINT = False
+try:
+    import cups
+    import tempfile
+    _CUPSPRINT = True
+except ImportError:
+    pass
+
+if _CUPSPRINT:
+    class CupsPrinter(Escpos):
+        """ Simple CUPS printer connector.
+        """
+        def __init__(self, printer_name=None, *args, **kwargs):
+            Escpos.__init__(self, *args, **kwargs)
+            self.conn = cups.Connection()
+            self.tmpfile = None
+            self.printer_name = printer_name
+            self.job_name = ''
+            self.pending_job = False
+            self.open()
+
+        @property
+        def printers(self):
+            """ Available CUPS printers.
+            """
+            return self.conn.getPrinters()
+
+        def open(self, job_name='python-escpos'):
+            """ Setup a new print job and target printer.
+
+            A call to this method is required to send new jobs to
+            the same CUPS connection.
+
+            Defaults to default CUPS printer.
+            Creates a new temporary file buffer.
+            """
+            self.job_name = job_name
+            if self.printer_name not in self.printers:
+                self.printer_name = self.conn.getDefault()
+            self.tmpfile = tempfile.NamedTemporaryFile(delete=True)
+
+        def _raw(self, msg):
+            """ Append any command sent in raw format to temporary file
+
+            :param msg: arbitrary code to be printed
+            :type msg: bytes
+            """
+            self.pending_job = True
+            try:
+                self.tmpfile.write(msg)
+            except ValueError:
+                self.pending_job = False
+                raise ValueError("Printer job not opened")
+
+        def send(self):
+            """ Send the print job to the printer.
+            """
+            if self.pending_job:
+                # Rewind tempfile
+                self.tmpfile.seek(0)
+                # Print temporary file via CUPS printer.
+                self.conn.printFile(
+                    self.printer_name,
+                    self.tmpfile.name,
+                    self.job_name,
+                    {"document-format": cups.CUPS_FORMAT_RAW})
+            self._clear()
+
+        def _clear(self):
+            """ Finish the print job.
+
+            Remove temporary file.
+            """
+            self.tmpfile.close()
+            self.pending_job = False
+
+        def close(self):
+            """ Close CUPS connection.
+
+            Send pending job to the printer if needed.
+            """
+            if self.pending_job:
+                self.send()
+            if self.conn:
+                print('Closing CUPS connection to printer {}'.format(
+                    self.printer_name))
+                self.conn = None

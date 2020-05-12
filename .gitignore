@@ -6,6 +6,7 @@ $~
 .idea/
 .directory
 .cache/
+settings.json
 
 # temporary data
 temp
@@ -21,6 +22,9 @@ dist/
 src/escpos/version.py
 .hypothesis
 .pytest_cache/
+
+# pyenv
+.python-version
 
 # testing temporary directories
 test/test-cli-output/
