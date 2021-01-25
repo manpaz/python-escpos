@@ -539,7 +539,7 @@ class Escpos(object):
         if count > 0:
             self.text('\n' * count)
 
-    def block_text(self, txt, font=None, columns=None):
+    def block_text(self, txt, font="0", columns=None):
         """ Text is printed wrapped to specified columns
 
         Text has to be encoded in unicode.
