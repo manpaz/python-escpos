@@ -54,7 +54,7 @@ jobs:
       env:
         ESCPOS_CAPABILITIES_FILE: /home/runner/work/python-escpos/python-escpos/capabilities-data/dist/capabilities.json
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
