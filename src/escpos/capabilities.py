@@ -13,9 +13,10 @@ from typing import Any, Dict, Optional, Type
 import importlib_resources
 import yaml
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
+if environ.get("ESCPOS_CAPABILITIES_DEBUG", 0):
+    logging.basicConfig()
 
+logger = logging.getLogger(__name__)
 pickle_dir = environ.get("ESCPOS_CAPABILITIES_PICKLE_DIR", mkdtemp())
 pickle_path = path.join(pickle_dir, f"{platform.python_version()}.capabilities.pickle")
 # get a temporary file from importlib_resources if no file is specified in env
